@@ -2,21 +2,90 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   labels:
-    app: solar-system
-  name: solar-system
+    app: pod-metadata-deployment
+  name: pod-metadata-deployment
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: solar-system
+      app: pod-metadata-deployment
   strategy: {}
   template:
     metadata:
       labels:
-        app: solar-system
+        name: pod-metadata
+        api: downward
+        usage: global
+        env: dev
     spec:
       containers:
-      - image: siddharth67/solar-system:v9
-        name: solar-system
-        ports: 
-        - containerPort: 80
+        - name: test-container
+          image:  siddharth67/pod-metadata:v1
+          imagePullPolicy: Always
+          resources:
+            requests:
+              memory: "32Mi"
+              cpu: "125m"
+            limits:
+              memory: "64Mi"
+              cpu: "250m"
+          env:
+            - name: MY_NODE_IP
+              valueFrom:
+                fieldRef:
+                  fieldPath: status.hostIP
+            - name: MY_POD_IP
+              valueFrom:
+                fieldRef:
+                  fieldPath: status.podIP
+            - name: MY_POD_UID
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.uid
+            - name: MY_CPU_REQUEST
+              valueFrom:
+                resourceFieldRef:
+                  containerName: test-container
+                  resource: requests.cpu
+            - name: MY_CPU_LIMIT
+              valueFrom:
+                resourceFieldRef:
+                  containerName: test-container
+                  resource: limits.cpu
+            - name: MY_MEM_REQUEST
+              valueFrom:
+                resourceFieldRef:
+                  containerName: test-container
+                  resource: requests.memory
+            - name: MY_MEM_LIMIT
+              valueFrom:
+                resourceFieldRef:
+                  containerName: test-container
+                  resource: limits.memory
+            - name: MY_NODE_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: spec.nodeName
+            - name: MY_POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: MY_POD_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+            - name: MY_POD_SERVICE_ACCOUNT
+              valueFrom:
+                fieldRef:
+                  fieldPath: spec.serviceAccountName
+          volumeMounts:
+            - name: podinfo
+              mountPath: /etc/pod/labels
+              readOnly: false
+      volumes:
+        - name: podinfo
+          downwardAPI:
+            items:
+              - path: "labels"
+                fieldRef:
+                  fieldPath: metadata.labels
