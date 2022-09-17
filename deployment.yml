@@ -2,13 +2,13 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   labels:
-    app: pod-metadata-deployment
+    app: pod-metadata
   name: pod-metadata-deployment
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: pod-metadata-deployment
+      app: pod-metadata
   strategy: {}
   template:
     metadata:
